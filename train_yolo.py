@@ -1,55 +1,81 @@
 """
 YOLOv8 训练脚本 - Person Detection
-数据集格式：YOLO 格式 (单类别: Person)
+
+用法：
+    # 从头训练（使用预训练权重）
+    python train_yolo.py
+
+    # 断点续传（从上次中断的 checkpoint 继续训练）
+    python train_yolo.py --resume
+
+    # 用已有模型在新数据集上继续训练（微调）
+    python train_yolo.py --weights runs/detect/train/weights/best.pt --data 新数据集/data.yaml --epochs 50
 """
+
+import argparse
+from pathlib import Path
 
 from ultralytics import YOLO
 
-# ==================== 配置 ====================
-DATA_YAML = "dataset/data.yaml"          # 数据集配置文件（相对路径）
-MODEL_NAME = "yolov8n.pt"                # 预训练模型 (n/s/m/l/x)
-EPOCHS = 100                             # 训练轮数
-BATCH_SIZE = 16                          # 批次大小
-IMGSZ = 640                              # 输入图片尺寸
-DEVICE = "cuda"                          # 使用 GPU 训练
-PROJECT = "runs/train"                   # 输出目录（相对路径）
-EXPERIMENT_NAME = "person_detection"     # 实验名称
 
-# ==================== 初始化模型 ====================
-model = YOLO(MODEL_NAME)
+def main():
+    parser = argparse.ArgumentParser(description="YOLOv8 Person Detection Training")
 
-# ==================== 训练 ====================
-results = model.train(
-    data=DATA_YAML,                      # 数据集配置文件
-    epochs=EPOCHS,                       # 训练轮数
-    batch=BATCH_SIZE,                    # 批次大小
-    imgsz=IMGSZ,                         # 输入图片尺寸
-    device=DEVICE,                       # 训练设备
-    project=PROJECT,                     # 输出项目目录
-    name=EXPERIMENT_NAME,                # 实验名称
-    patience=20,                         # Early stopping 轮数
-    lr0=0.01,                            # 初始学习率
-    lrf=0.01,                            # 最终学习率 (lr0 * lrf)
-    warmup_epochs=3,                     # 预热轮数
-    augment=True,                        # 是否使用数据增强
-    val=True,                            # 是否在训练中验证
-    save=True,                           # 保存模型
-    save_period=10,                      # 每 N 轮保存一次模型
-    workers=4,                           # 数据加载线程数
-    amp=True,                            # 混合精度训练
-)
+    # 模型与数据
+    parser.add_argument("--weights", type=str, default="yolov8n.pt",
+                        help="初始权重路径（从头训练用预训练权重，微调用已有模型）")
+    parser.add_argument("--data", type=str, default="dataset/data.yaml",
+                        help="数据集配置文件路径")
 
-# ==================== 评估 ====================
-print("\n===== 在测试集上评估最佳模型 =====")
-best_model_path = f"{PROJECT}/{EXPERIMENT_NAME}/weights/best.pt"
-model = YOLO(best_model_path)
-metrics = model.val(data=DATA_YAML, split="test")
-print(f"mAP50: {metrics.box.map50:.4f}")
-print(f"mAP50-95: {metrics.box.map:.4f}")
+    # 训练参数
+    parser.add_argument("--epochs", type=int, default=100, help="训练轮数")
+    parser.add_argument("--batch", type=int, default=16, help="批次大小")
+    parser.add_argument("--imgsz", type=int, default=640, help="输入图片尺寸")
+    parser.add_argument("--device", type=str, default="cuda", help="训练设备 (cuda / cpu)")
 
-# ==================== 导出模型 ====================
-print("\n===== 导出模型 =====")
-model.export(format="onnx")  # 导出为 ONNX 格式
+    # 断点续传
+    parser.add_argument("--resume", action="store_true",
+                        help="断点续传：从上次中断的 checkpoint 继续训练")
 
-print("\n===== 训练完成 =====")
-print(f"最佳模型: {best_model_path}")
+    args = parser.parse_args()
+
+    # ==================== 加载模型 ====================
+    # --resume 模式下 weights 必须是上次训练的 last.pt 路径
+    # YOLOv8 的 resume=True 会自动从 runs/detect/train/weights/last.pt 恢复
+    model = YOLO(args.weights)
+
+    # ==================== 训练 ====================
+    results = model.train(
+        data=args.data,
+        epochs=args.epochs,
+        batch=args.batch,
+        imgsz=args.imgsz,
+        device=args.device,
+        resume=args.resume,              # 断点续传
+        patience=20,
+        lr0=0.01,
+        lrf=0.01,
+        warmup_epochs=3,
+        augment=True,
+        val=True,
+        save=True,
+        save_period=10,
+        workers=4,
+        amp=True,
+    )
+
+    # ==================== 评估 ====================
+    print("\n===== 在测试集上评估最佳模型 =====")
+    best_model_path = str(results.save_dir / "weights" / "best.pt")
+    model = YOLO(best_model_path)
+    metrics = model.val(data=args.data, split="test")
+    print(f"mAP50:   {metrics.box.map50:.4f}")
+    print(f"mAP50-95: {metrics.box.map:.4f}")
+
+    print("\n===== 训练完成 =====")
+    print(f"最佳模型: {best_model_path}")
+    print(f"训练输出: {results.save_dir}")
+
+
+if __name__ == "__main__":
+    main()

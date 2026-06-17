@@ -2,7 +2,7 @@
 YOLOv8 验证脚本 - 在测试集上评估模型精度
 用法：
     python val.py
-    python val.py --model runs/train/person_detection/weights/best.pt
+    python val.py --model runs/detect/train/weights/best.pt
 """
 
 import argparse
@@ -13,8 +13,8 @@ from ultralytics import YOLO
 
 def main():
     parser = argparse.ArgumentParser(description="YOLOv8 Person Detection Validation")
-    parser.add_argument("--model", type=str, default="runs/train/person_detection/weights/best.pt",
-                        help="模型权重路径")
+    parser.add_argument("--model", type=str, default="runs/detect/train/weights/best.pt",
+                        help="模型权重路径（YOLO 默认路径）")
     parser.add_argument("--data", type=str, default="dataset/data.yaml",
                         help="数据集配置文件路径")
     parser.add_argument("--split", type=str, default="test",
@@ -39,7 +39,7 @@ def main():
     print(f"[INFO] 加载模型: {args.model}")
     model = YOLO(str(model_path))
 
-    # 验证
+    # 验证（使用 YOLO 默认输出路径：runs/detect/val/）
     print(f"[INFO] 数据集: {args.data}")
     print(f"[INFO] 评估划分: {args.split}")
     metrics = model.val(
@@ -48,9 +48,6 @@ def main():
         imgsz=args.imgsz,
         batch=args.batch,
         device=args.device,
-        project="runs/val",
-        name="exp",
-        exist_ok=True,
     )
 
     # 打印结果
@@ -59,7 +56,7 @@ def main():
     print(f"mAP50-95: {metrics.box.map:.4f}")
     print(f"精度 (P): {metrics.box.p:.4f}")
     print(f"召回 (R): {metrics.box.r:.4f}")
-    print(f"结果保存在 runs/val/exp/")
+    print(f"结果保存在 runs/detect/val/")
 
 
 if __name__ == "__main__":

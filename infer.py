@@ -6,7 +6,6 @@ YOLOv8 推理脚本 - 对单张图片或目录进行推理
 """
 
 import argparse
-import os
 from pathlib import Path
 
 from ultralytics import YOLO
@@ -14,8 +13,8 @@ from ultralytics import YOLO
 
 def main():
     parser = argparse.ArgumentParser(description="YOLOv8 Person Detection Inference")
-    parser.add_argument("--model", type=str, default="runs/train/person_detection/weights/best.pt",
-                        help="模型权重路径")
+    parser.add_argument("--model", type=str, default="runs/detect/train/weights/best.pt",
+                        help="模型权重路径（YOLO 默认路径）")
     parser.add_argument("--source", type=str, default="dataset/test/images",
                         help="输入图片或目录路径")
     parser.add_argument("--conf", type=float, default=0.25,
@@ -43,7 +42,7 @@ def main():
     print(f"[INFO] 加载模型: {args.model}")
     model = YOLO(str(model_path))
 
-    # 推理
+    # 推理（使用 YOLO 默认输出路径：runs/detect/predict/）
     print(f"[INFO] 推理源: {args.source}")
     print(f"[INFO] 置信度阈值: {args.conf}, IoU阈值: {args.iou}")
     results = model.predict(
@@ -54,13 +53,10 @@ def main():
         device=args.device,
         save=args.save_img,
         save_txt=args.save_txt,
-        project="runs/infer",
-        name="exp",
-        exist_ok=True,
     )
 
     print(f"[INFO] 推理完成，共处理 {len(results)} 张图片")
-    print(f"[INFO] 结果保存在 runs/infer/exp/")
+    print(f"[INFO] 结果保存在 runs/detect/predict/")
 
 
 if __name__ == "__main__":
