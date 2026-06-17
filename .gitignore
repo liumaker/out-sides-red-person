@@ -1,0 +1,29 @@
+# 数据集
+dataset/
+
+# 训练输出（权重、日志等）
+runs/
+
+# 模型权重文件
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统
+.DS_Store
+Thumbs.db
