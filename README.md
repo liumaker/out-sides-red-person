@@ -45,7 +45,7 @@ python train_yolo.py --weights runs/detect/train/weights/best.pt --data path/to/
 ## 推理
 
 ```bash
-# 单张图片
+# 单张图片（默认只检测 Person）
 python infer.py --source path/to/image.jpg
 
 # 图片目录
@@ -56,10 +56,19 @@ python infer.py --source path/to/video.mp4
 
 # 视频推理 + 实时显示
 python infer.py --source video.mp4 --show
+
+# 检测多个类别（Person 和 Car）
+python infer.py --source image.jpg --classes 0 1
 ```
+
+**类别映射**：0-Person, 1-Car, 2-Bicycle, 3-OtherVehicle, 4-DontCare
 
 ## 验证
 
 ```bash
+# 默认只评估 Person
 python val.py
+
+# 评估多个类别
+python val.py --classes 0 1
 ```
