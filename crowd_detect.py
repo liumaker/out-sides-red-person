@@ -190,9 +190,13 @@ def main():
 
     # ==================== 视频处理 ====================
     if str(args.source).endswith((".mp4", ".avi", ".mov", ".mkv", ".webm")):
-        cap = cv2.VideoCapture(str(args.source))
+        # 优先使用 FFmpeg 后端（兼容性最好），失败则回退默认后端
+        cap = cv2.VideoCapture(str(args.source), cv2.CAP_FFMPEG)
+        if not cap.isOpened():
+            cap = cv2.VideoCapture(str(args.source))
         if not cap.isOpened():
             print(f"[ERROR] 无法打开视频: {args.source}")
+            print("  请检查文件路径是否正确，或尝试安装 ffmpeg: sudo apt install ffmpeg")
             return
 
         fps = cap.get(cv2.CAP_PROP_FPS)
