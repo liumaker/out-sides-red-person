@@ -63,6 +63,24 @@ python infer.py --source image.jpg --classes 0 1
 
 **类别映射**：0-Person, 1-Car, 2-Bicycle, 3-OtherVehicle, 4-DontCare
 
+## 聚集检测
+
+```bash
+# 视频聚集检测
+python crowd_detect.py --source path/to/video.mp4
+
+# 视频检测 + 实时显示
+python crowd_detect.py --source video.mp4 --show
+
+# 图片聚集检测
+python crowd_detect.py --source path/to/image.jpg
+
+# 自定义参数（更敏感：距离更近、2人即算聚集）
+python crowd_detect.py --source video.mp4 --distance 1.0 --min-people 2
+```
+
+详细算法说明见 [CROWD_ALGORITHM.md](CROWD_ALGORITHM.md)。
+
 ## 验证
 
 ```bash
